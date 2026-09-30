@@ -10,6 +10,11 @@
 	import { toasts } from '$lib/stores/toasts.svelte';
 	import { i18n } from '$lib/stores/i18n.svelte';
 	import { buildCellLinkUrl, coordsAtIntersection } from '$lib/cellset/cellLinkUrl';
+	import {
+		cellNumericValue,
+		formatDataCell,
+		readCellConditionalFormat
+	} from '$lib/cellset/cellConditionalFormat';
 
 	interface Props {
 		result: QueryResult;
@@ -610,6 +615,11 @@
 		return Number.isFinite(n) ? n.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '—';
 	}
 
+	let cellFormatRules = $derived(readCellConditionalFormat(queryStore.current?.properties));
+	let columnValues = $derived(
+		parsed.columnCategories.map((_, c) => parsed.dataRows.map((row) => cellNumericValue(row[c])))
+	);
+
 	function cellLinkTemplate(): string | null {
 		const raw = selection.cube?.cellLinkUrl ?? queryStore.current?.cube?.cellLinkUrl;
 		if (raw == null) return null;
@@ -783,8 +793,13 @@
 							{/if}
 						{/each}
 						{#each parsed.dataRows[r] as dc, cIdx}
-							{@const fmt = parseFormattedCell(dc.value)}
-							{@const num = isNumeric(fmt.display)}
+							{@const painted = formatDataCell(
+								cellFormatRules,
+								parsed.columnCategories[cIdx] ?? '',
+								dc,
+								columnValues[cIdx] ?? []
+							)}
+							{@const num = isNumeric(painted.display)}
 							{@const selected = isSelected(r, cIdx)}
 							{@const hasFocus = isFocused(r, cIdx)}
 							<td
@@ -796,10 +811,11 @@
 								aria-selected={selected ? 'true' : undefined}
 								data-r={r}
 								data-c={cIdx}
-								style={fmt.color ? `color: ${fmt.color}` : undefined}
+								style={painted.style}
 								onmousedown={(e) => onCellMouseDown(e, r, cIdx)}
 								onmouseenter={() => onCellMouseEnter(r, cIdx)}
-								oncontextmenu={(e) => onDataCellContextMenu(e, r, cIdx)}>{fmt.display}</td
+								oncontextmenu={(e) => onDataCellContextMenu(e, r, cIdx)}
+								>{painted.icon ? `${painted.icon} ` : ''}{painted.display}</td
 							>
 						{/each}
 						{#if spark !== 'none'}

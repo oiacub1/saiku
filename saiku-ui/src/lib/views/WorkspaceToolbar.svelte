@@ -21,7 +21,8 @@
 		Sparkles,
 		Undo2,
 		Redo2,
-		Mail
+		Mail,
+		Palette
 	} from '@lucide/svelte';
 	import { Tooltip } from '$lib/components/ui';
 	import SaveQueryModal from '$lib/modals/SaveQueryModal.svelte';
@@ -34,6 +35,13 @@
 	import MDXModal from '$lib/modals/MDXModal.svelte';
 	import DrillAcrossModal from '$lib/modals/DrillAcrossModal.svelte';
 	import ReportTitlesModal, { type ReportTitles } from '$lib/modals/ReportTitlesModal.svelte';
+	import CellConditionalFormatModal from '$lib/modals/CellConditionalFormatModal.svelte';
+	import {
+		readCellConditionalFormat,
+		withCellConditionalFormat
+	} from '$lib/cellset/cellConditionalFormat';
+	import { parseCellset } from '$lib/views/cellsetUtils';
+	import type { ConditionalFormatRule } from '$lib/api/dashboards';
 	import { repository } from '$lib/stores/repository.svelte';
 	import { saveResource } from '$lib/api/repository';
 	import { toasts } from '$lib/stores/toasts.svelte';
@@ -135,6 +143,7 @@
 	let mdxBuffer = $state<string>('');
 	let drillAcrossOpen = $state(false);
 	let reportTitlesOpen = $state(false);
+	let cellFormatOpen = $state(false);
 	let toolsMenuOpen = $state(false);
 	let exportMenuOpen = $state(false);
 	let runMenuOpen = $state(false);
@@ -335,6 +344,17 @@
 	function openDrillAcross() {
 		closeToolsMenu();
 		drillAcrossOpen = true;
+	}
+
+	function openCellFormat() {
+		toolsMenuOpen = false;
+		cellFormatOpen = true;
+	}
+
+	function onCellFormatSave(rules: ConditionalFormatRule[]) {
+		cellFormatOpen = false;
+		if (!query.current) return;
+		query.current.properties = withCellConditionalFormat(query.current.properties, rules);
 	}
 
 	function openReportTitles() {
@@ -574,6 +594,9 @@
 				<button type="button" class="toolbar__item" onclick={openReportTitles}>
 					<Tags size={16} /> <span>{i18n.t('toolbar.reportTitles')}…</span>
 				</button>
+				<button type="button" class="toolbar__item" onclick={openCellFormat}>
+					<Palette size={16} /> <span>{i18n.t('toolbar.cellFormat')}…</span>
+				</button>
 				<button
 					type="button"
 					class="toolbar__item"
@@ -664,6 +687,14 @@
 	open={reportTitlesOpen}
 	onSave={onReportTitlesSave}
 	onCancel={() => (reportTitlesOpen = false)}
+/>
+
+<CellConditionalFormatModal
+	open={cellFormatOpen}
+	rules={readCellConditionalFormat(query.current?.properties)}
+	columns={query.result?.cellset ? parseCellset(query.result).columnCategories.filter(Boolean) : []}
+	onSave={onCellFormatSave}
+	onCancel={() => (cellFormatOpen = false)}
 />
 
 <ConfirmModal
