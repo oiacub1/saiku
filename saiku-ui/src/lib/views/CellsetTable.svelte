@@ -2,6 +2,8 @@
 	import type { CellEntry, QueryResult } from '$lib/api/query';
 	import { parseCellset, rowHeaderDisplay } from '$lib/views/cellsetUtils';
 	import { parseFormattedCell } from '$lib/cellset/cellFormat';
+	import { roundCellDisplay } from '$lib/cellset/decimalFormat';
+	import { decimalPlaces } from '$lib/stores/decimalPlaces.svelte';
 	import { query as queryStore } from '$lib/stores/query.svelte';
 	import { datasources } from '$lib/stores/datasources.svelte';
 	import { selection } from '$lib/stores/selection.svelte';
@@ -799,6 +801,11 @@
 								dc,
 								columnValues[cIdx] ?? []
 							)}
+							<!-- saiku#1988: display-only decimals. The cell's
+							     underlying value, the tooltip and every
+							     copy/drillthrough/export path keep the raw
+							     server formatting. -->
+							{@const shown = roundCellDisplay(fmt.display, decimalPlaces.decimals)}
 							{@const num = isNumeric(painted.display)}
 							{@const selected = isSelected(r, cIdx)}
 							{@const hasFocus = isFocused(r, cIdx)}
