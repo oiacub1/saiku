@@ -805,7 +805,7 @@
 							     underlying value, the tooltip and every
 							     copy/drillthrough/export path keep the raw
 							     server formatting. -->
-							{@const shown = roundCellDisplay(fmt.display, decimalPlaces.decimals)}
+							{@const shown = roundCellDisplay(painted.display, decimalPlaces.decimals)}
 							{@const num = isNumeric(painted.display)}
 							{@const selected = isSelected(r, cIdx)}
 							{@const hasFocus = isFocused(r, cIdx)}
@@ -822,7 +822,7 @@
 								onmousedown={(e) => onCellMouseDown(e, r, cIdx)}
 								onmouseenter={() => onCellMouseEnter(r, cIdx)}
 								oncontextmenu={(e) => onDataCellContextMenu(e, r, cIdx)}
-								>{painted.icon ? `${painted.icon} ` : ''}{painted.display}</td
+								>{painted.icon ? `${painted.icon} ` : ''}{shown}</td
 							>
 						{/each}
 						{#if spark !== 'none'}
